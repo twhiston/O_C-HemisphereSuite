@@ -11,10 +11,12 @@
 // * Category filtering is deprecated at 1.8, but I'm leaving the per-applet categorization
 // alone to avoid breaking forked codebases by other developers.
 
-#define HEMISPHERE_AVAILABLE_APPLETS 51
+#define HEMISPHERE_AVAILABLE_APPLETS 52
+// TODO - make it dynamic with some version of - static constexpr int NUM_AVAILABLE_APPS = ARRAY_SIZE(available_apps);
 
 //////////////////  id  cat   class name
 #define HEMISPHERE_APPLETS { \
+    DECLARE_APPLET( 666, 0x04, ConstrainedRandom), \
     DECLARE_APPLET(  8, 0x01, ADSREG), \
     DECLARE_APPLET( 34, 0x01, ADEG), \
     DECLARE_APPLET( 15, 0x02, AnnularFusion), \
