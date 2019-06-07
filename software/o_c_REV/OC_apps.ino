@@ -37,7 +37,6 @@
 OC::App available_apps[] = {
   DECLARE_APP('H','S', "Hemisphere", HEMISPHERE),
   DECLARE_APP('M','I', "Captain MIDI", MIDI),
-  DECLARE_APP('D','2', "Darkest Timeline", TheDarkestTimeline),
   DECLARE_APP('E','N', "Enigma", EnigmaTMWS),
   DECLARE_APP('N','N', "Neural Net", NeuralNetwork),
   DECLARE_APP('S','C', "Scale Editor", SCALEEDITOR),

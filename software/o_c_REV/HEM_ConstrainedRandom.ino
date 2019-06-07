@@ -1,13 +1,4 @@
-// Hemisphere Applet Boilerplate. Follow these steps to add a Hemisphere app:
-//
-// (3) Implement all of the public methods below
-// (4) Add text to the help section below in SetHelp()
-// (5) Add a declare line in hemisphere_config.h, which looks like this:
-//     DECLARE_APPLET(id, categories, ConstrainedRandom), \
-// (6) Increment HEMISPHERE_AVAILABLE_APPLETS in hemisphere_config.h
-// (7) Add your name and any additional copyright info to the block below
-
-// Copyright (c) 2018, __________
+// Copyright (c) 2018, Tom Whiston
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,46 +18,67 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <Entropy.h>
+// TODO
+// add option to use digital input 2 to change the value, and 1 just to clock
+// add option to quantise output values
+// do saving with better values and capture all settings
+// fix overflow issue when min and max are inverted. close it down to a single window which you can 'push' instead
+//
+// The real range is -HEMISPHERE_3V_CV, 0, HEMISPHERE_MAX_CV
 
-struct RandGen
-{
-    short min;
-    short max;
-    short value;
-};
+#include <Entropy.h>
+static const uint16_t const_rand_step_vals[] = {1,2,5,10,25,50,100,250,500,1000,1500,2000};
+static const uint8_t const_rand_step_count = sizeof(const_rand_step_vals)/sizeof(const_rand_step_vals[0])-1;
 
 class ConstrainedRandom : public HemisphereApplet {
 public:
 
     const char* applet_name() { // Maximum 10 characters
-        return "ConstrainedRandom";
+        return "ConstRand";
     }
 
 	/* Run when the Applet is selected */
     void Start() {
       //TODO - restore things instead of resetting
       Entropy.Initialize();
-      this->rand1.min = 0;
-      this->rand1.max = 7;
-      this->rand1.value = Entropy.random(this->rand1.min,this->rand1.max);
+      this->randMax = HEMISPHERE_MAX_CV;
+      this->newRand();
     }
 
 	/* Run during the interrupt service routine, 16667 times per second */
     void Controller() {
+
+        if (Changed(0)) {
+          this->randMin = constrain(In(0), -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV);
+        }
+        if (Changed(1)) {
+          this->randMax = constrain(In(1), -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV);
+        }
+
+        // dont wait for lag as we dont read any adc values
+        if (Clock(0)) {
+            //output the previous value on the second output
+            Out(1, this->randValue);
+            if(!this->changeInputActive){
+                this->newRand();
+            }
+            Out(0, this->randValue);
+        }
+        if(Clock(1) && this->changeInputActive){
+            this->newRand();
+        }
     }
 
 	/* Draw the screen */
     void View() {
         gfxHeader(applet_name());
-        gfxSkyline();
-        gfxPrint(32, 25, "val");
-        gfxPrint(this->rand1.value);
-        // Add other view code as private methods
+        DrawUI();
     }
 
 	/* Called when the encoder button for this hemisphere is pressed */
     void OnButtonPress() {
+        //cursor = !cursor;
+        if (++cursor == 3) cursor = 0;
     }
 
 	/* Called when the encoder for this hemisphere is rotated
@@ -74,6 +86,21 @@ public:
 	 * direction -1 is counterclockwise
 	 */
     void OnEncoderMove(int direction) {
+        switch (cursor)
+        {
+        case 0:
+            this->randMin = constrain(this->randMin + (direction * const_rand_step_vals[this->valueIndex]), -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV);
+            break;
+        case 1:
+            this->randMax = constrain(this->randMax + (direction * const_rand_step_vals[this->valueIndex]), -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV);
+            break;
+        case 2:
+            this->valueIndex = constrain(this->valueIndex + direction, 0, const_rand_step_count);
+            break;
+        default:
+            break;
+        }
+
     }
         
     /* Each applet may save up to 32 bits of data. When data is requested from
@@ -82,8 +109,8 @@ public:
      */
     uint32_t OnDataRequest() {
         uint32_t data = 0;
-        // example: pack property_name at bit 0, with size of 8 bits
-        // Pack(data, PackLocation {0,8}, property_name); 
+        Pack(data, PackLocation {0,16}, this->randMin);
+        Pack(data, PackLocation {16,16}, this->randMax);
         return data;
     }
 
@@ -93,35 +120,72 @@ public:
      * properties.
      */
     void OnDataReceive(uint32_t data) {
-        // example: unpack value at bit 0 with size of 8 bits to property_name
-        // property_name = Unpack(data, PackLocation {0,8}); 
+        this->randMin = Unpack(data, PackLocation {0,16});
+        this->randMax = Unpack(data, PackLocation {16,16});
     }
 
 protected:
     /* Set help text. Each help section can have up to 18 characters. Be concise! */
     void SetHelp() {
         //                               "------------------" <-- Size Guide
-        help[HEMISPHERE_HELP_DIGITALS] = "Digital in help";
-        help[HEMISPHERE_HELP_CVS]      = "CV in help";
-        help[HEMISPHERE_HELP_OUTS]     = "Out help";
-        help[HEMISPHERE_HELP_ENCODER]  = "123456789012345678";
+        help[HEMISPHERE_HELP_DIGITALS] = "clock / new value";
+        help[HEMISPHERE_HELP_CVS]      = "min / max";
+        help[HEMISPHERE_HELP_OUTS]     = "Rand / last rand";
+        help[HEMISPHERE_HELP_ENCODER]  = "set min/max values";
         //                               "------------------" <-- Size Guide
     }
     
 private:
 
-    RandGen rand1;
+    int cursor = 0;
+    int randMin = 0;
+    int randMax = 0;
+    int randValue = 0;
+    int valueIndex = 0;
+
+    bool changeInputActive = false;
+
+    const uint8_t drawBase = 15;
+    const uint8_t lineHeight = 10;
+
+    void newRand(){
+        this->randValue = Entropy.random(this->randMin,this->randMax);
+    }
+
+    void DrawUI(){
+
+        gfxPrint(0, drawBase, "min ");
+        gfxPrint(this->randMin);
+        if (cursor == 0) {
+            uint8_t ypos = cursorYpos(drawBase,1,-2);
+            gfxLine(0, ypos, 50, ypos);
+        }
+        gfxPrint(0, cursorYpos(drawBase, 1), "max ");
+        gfxPrint(this->randMax);
+        if (cursor == 1) {
+            uint8_t ypos = cursorYpos(drawBase,2,-2);
+            gfxLine(0, ypos, 50, ypos);
+        }
+        gfxPrint(0, cursorYpos(drawBase, 2), "inc ");
+        gfxPrint(const_rand_step_vals[this->valueIndex]);
+        if (cursor == 2) {
+            uint8_t ypos = cursorYpos(drawBase,3,-2);
+            gfxLine(0, ypos, 50, ypos);
+        }
+        gfxPrint(0, cursorYpos(drawBase, 3), "val ");
+        gfxPrint(this->randValue);
+
+    }
+
+    uint8_t cursorYpos(uint8_t pos, uint8_t line = 0, int8_t offset = 0){
+        return (drawBase + (line * lineHeight)) + offset;
+    }
 
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Hemisphere Applet Functions
-///
-///  Once you run the find-and-replace to make these refer to ConstrainedRandom,
-///  it's usually not necessary to do anything with these functions. You
-///  should prefer to handle things in the HemisphereApplet child class
-///  above.
 ////////////////////////////////////////////////////////////////////////////////
 ConstrainedRandom ConstrainedRandom_instance[2];
 

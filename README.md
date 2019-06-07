@@ -3,6 +3,9 @@ Hemisphere Suite: Alternate Alternate Firmware for Ornament and Crime
 
 ![My image](https://farm1.staticflickr.com/676/20090774694_b56e557693_b.jpg)
 
+### further additions:
+
+As hemisphere is so great this fork ditches the darkest timeline and uses the space for more hemisphere applets
 
 ### firmware:
 
