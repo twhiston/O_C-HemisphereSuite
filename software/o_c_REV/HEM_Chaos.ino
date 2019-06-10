@@ -29,45 +29,50 @@ class ChaosAlgo {
 
     public:
 
-        // Called in the hemisphere app Start() function
-        void start(){};
-
         void cvIn(int a, int b){};
 
         // Called when clocked in input 0
-        void run(){};
+        virtual void run();
 
-        int getX(){
+        simfloat getX(){
             return this->x;
         }
-        int getY(){
+        simfloat getY(){
             return this->y;
         }
 
     protected:
-
-        float x;
-        float y;
-        float z;
+        simfloat x;
+        simfloat y;
+        simfloat z;
 };
 
-
+// TODO - for some reason nothing is called right now
 class ChaoSimplified : public ChaosAlgo {
 
 public:
 
-    void start(){
-        this->param_p = 10.;
-        this->param_b = 8.0/3.0;
-        this->param_r = 30.5;
-        this->param_TS = 0.0003;
-    };
+    ChaoSimplified(){
+        // todo, how?
+        // this->param_r = 30.5;
+        // this->param_TS = 0.0003;
+        this->param_r = int2simfloat(305)/10;
+        this->param_TS = int2simfloat(3)/10000;
+
+        this->param_p = int2simfloat(10);
+        this->param_b = int2simfloat(8)/3;
+
+        //x 0.1, y -10., z 0.1
+        this->x = int2simfloat(1)/10;
+        this->y = int2simfloat(-10);
+        this->z = int2simfloat(1)/10;
+    }
 
     void run(){
 	        //calculate change
-	        float dx = this->param_p * (this->y - this->x);
-	        float dy = (this->x * (this->param_r - this->y)) - this->y;
-	        float dz = (this->x * this->y) - (this->param_b * this->y);
+	        simfloat dx = this->param_p * (this->y - this->x);
+	        simfloat dy = (this->x * (this->param_r - this->y)) - this->y;
+	        simfloat dz = (this->x * this->y) - (this->param_b * this->y);
 	        //update histories
 	        this->x = this->x + dx * this->param_TS;
 	        this->y = this->y + dy * this->param_TS;
@@ -76,17 +81,25 @@ public:
 
     private:
         // in max params can be set from outside the dsp code
-        float param_p;
-        float param_b;
-        float param_r;
-        float param_TS;
+        simfloat param_p;
+        simfloat param_b;
+        simfloat param_r;
+        simfloat param_TS;
 };
 
 
 class Chaos : public HemisphereApplet {
 public:
 
-    Chaos() : algos{ChaoSimplified{}}{}
+    Chaos() : algos{new ChaoSimplified()}{}
+
+    ~Chaos(){
+        for (size_t i = 0; i < CHAOS_AVAILABLE_ALGO; i++)
+        {
+            delete this->algos[i];
+        }
+        
+    }
 
     const char* applet_name() { // Maximum 10 characters
         return "Chaos";
@@ -95,19 +108,15 @@ public:
 	/* Run when the Applet is selected */
     void Start() {
         this->selectedAlgo = 0;
-        for (uint8_t i = 0; i < CHAOS_AVAILABLE_ALGO; i++)
-        {
-            this->algos[i].start();
-        }
     }
 
 	/* Run during the interrupt service routine, 16667 times per second */
     void Controller() {
 
         if (Clock(0)) {	
-	        this->algos[selectedAlgo].run(In(0), In(1));
-            Out(0, this->algos[selectedAlgo].getX());
-            Out(1, this->algos[selectedAlgo].getY());
+	        this->algos[selectedAlgo]->run();
+            Out(0, simfloat2int(this->algos[selectedAlgo]->getX()));
+            Out(1, simfloat2int(this->algos[selectedAlgo]->getY()));
         }
     }
 
@@ -116,6 +125,11 @@ public:
         gfxHeader(applet_name());
         gfxSkyline();
         // Add other view code as private methods
+        gfxPrint(0, 15, "x ");
+        gfxPrint(simfloat2int(this->algos[selectedAlgo]->getX()));
+        gfxPrint(0, cursorYpos(drawBase, 1), "y ");
+        gfxPrint(simfloat2int(this->algos[selectedAlgo]->getY()));
+
     }
 
 	/* Called when the encoder button for this hemisphere is pressed */
@@ -151,6 +165,13 @@ public:
     }
 
 protected:
+
+    const uint8_t drawBase = 15;
+    const uint8_t lineHeight = 10;
+
+    uint8_t cursorYpos(uint8_t pos, uint8_t line = 0, int8_t offset = 0){
+        return (drawBase + (line * lineHeight)) + offset;
+    }
     /* Set help text. Each help section can have up to 18 characters. Be concise! */
     void SetHelp() {
         //                               "------------------" <-- Size Guide
@@ -165,7 +186,7 @@ private:
 
     // TODO should be an array of the base class so we can select one and run it in a clean way
     uint8_t selectedAlgo;
-    ChaosAlgo algos[CHAOS_AVAILABLE_ALGO];
+    ChaosAlgo* algos[CHAOS_AVAILABLE_ALGO];
 
 };
 
