@@ -1,11 +1,9 @@
 // Hemisphere Applet Boilerplate. Follow these steps to add a Hemisphere app:
 //
-// (1) Save this file as HEM_ClockMix.ino
-// (2) Find and replace "ClassName" with the name of your Applet class
 // (3) Implement all of the public methods below
 // (4) Add text to the help section below in SetHelp()
 // (5) Add a declare line in hemisphere_config.h, which looks like this:
-//     DECLARE_APPLET(id, categories, ClockMix), \
+//     DECLARE_APPLET(id, categories, PhasePttrn), \
 // (6) Increment HEMISPHERE_AVAILABLE_APPLETS in hemisphere_config.h
 // (7) Add your name and any additional copyright info to the block below
 
@@ -29,59 +27,63 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#include <Entropy.h>
-
-
-#define HEM_CLOCKMIX_MAX 100
-#define HEM_CLOCKMIX_GUI_ELEMENTS 2
-
-class ClockMix : public HemisphereApplet {
+class PhasePttrn : public HemisphereApplet {
 public:
 
-    const char* applet_name() {
-        return "ClockMix";
+    const char* applet_name() { // Maximum 10 characters
+        return "PhasePttrn";
     }
 
+	/* Run when the Applet is selected */
     void Start() {
-        Entropy.Initialize();
-        in1 = false;
-        in2 = false;
     }
 
+	/* Run during the interrupt service routine, 16667 times per second */
     void Controller() {
 
-        in1 = processClock(0);
-        in2 = processClock(1);
-
-        //if either outs are true then output a tick
-        if (in1 || in2)
-        {
+        //This wont work, needs timers!
+        if (Clock(0)){
             ClockOut(0);
         }
-        // if both are high output
-        if (in1 && in2)
-        {
+
+        if (Clock(1)){
+            phasePlayCount = 0;
+        }
+
+        if (phasePlayCount <= 0) {
             ClockOut(1);
+            phasePlayCount = phaseShift;
+        } else {
+            --phasePlayCount;
         }
 
     }
 
+    int phaseShift;
+    int phasePlayCount;
+
+	/* Draw the screen */
     void View() {
         gfxHeader(applet_name());
-        DrawInterface();
+        gfxSkyline();
+        // Add other view code as private methods
     }
 
+	/* Called when the encoder button for this hemisphere is pressed */
     void OnButtonPress() {
-        if (++cursor == HEM_CLOCKMIX_GUI_ELEMENTS) cursor = 0;
-        ResetCursor();
     }
 
+	/* Called when the encoder for this hemisphere is rotated
+	 * direction 1 is clockwise
+	 * direction -1 is counterclockwise
+	 */
     void OnEncoderMove(int direction) {
-        prob[cursor] += direction;
-        if (prob[cursor] > HEM_CLOCKMIX_MAX) prob[cursor] = HEM_CLOCKMIX_MAX;
-        if (prob[cursor] <= 0) prob[cursor] = 0;
     }
         
+    /* Each applet may save up to 32 bits of data. When data is requested from
+     * the manager, OnDataRequest() packs it up (see HemisphereApplet::Pack()) and
+     * returns it.
+     */
     uint32_t OnDataRequest() {
         uint32_t data = 0;
         // example: pack property_name at bit 0, with size of 8 bits
@@ -89,12 +91,18 @@ public:
         return data;
     }
 
+    /* When the applet is restored (from power-down state, etc.), the manager may
+     * send data to the applet via OnDataReceive(). The applet should take the data
+     * and unpack it (see HemisphereApplet::Unpack()) into zero or more of the applet's
+     * properties.
+     */
     void OnDataReceive(uint32_t data) {
         // example: unpack value at bit 0 with size of 8 bits to property_name
         // property_name = Unpack(data, PackLocation {0,8}); 
     }
 
 protected:
+    /* Set help text. Each help section can have up to 18 characters. Be concise! */
     void SetHelp() {
         //                               "------------------" <-- Size Guide
         help[HEMISPHERE_HELP_DIGITALS] = "Digital in help";
@@ -105,51 +113,25 @@ protected:
     }
     
 private:
-    int cursor; // Which output is currently being edited
 
-    uint32_t prob[2]; //probability for each input to be sent to the output
-
-    bool in1;
-    bool in2;
-
-    // faster than a modulo division
-    // uint32_t reduce(uint32_t x, uint32_t N) {
-    //     return ((uint64_t) x * (uint64_t) N) >> 32 ;
-    // }
-
-    inline bool processClock(int ch){
-        bool state = false;
-        if (Clock(ch)) {
-            uint32_t r = Entropy.random(0, HEM_CLOCKMIX_MAX);
-            if (r < prob[ch])
-            {
-                state = true;
-            }
-        }
-        return state;
-    }
-    
-    void DrawInterface() {
-        gfxSkyline();
-    }
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Hemisphere Applet Functions
 ///
-///  Once you run the find-and-replace to make these refer to ClockMix,
+///  Once you run the find-and-replace to make these refer to PhasePttrn,
 ///  it's usually not necessary to do anything with these functions. You
 ///  should prefer to handle things in the HemisphereApplet child class
 ///  above.
 ////////////////////////////////////////////////////////////////////////////////
-ClockMix ClockMix_instance[2];
+PhasePttrn PhasePttrn_instance[2];
 
-void ClockMix_Start(bool hemisphere) {ClockMix_instance[hemisphere].BaseStart(hemisphere);}
-void ClockMix_Controller(bool hemisphere, bool forwarding) {ClockMix_instance[hemisphere].BaseController(forwarding);}
-void ClockMix_View(bool hemisphere) {ClockMix_instance[hemisphere].BaseView();}
-void ClockMix_OnButtonPress(bool hemisphere) {ClockMix_instance[hemisphere].OnButtonPress();}
-void ClockMix_OnEncoderMove(bool hemisphere, int direction) {ClockMix_instance[hemisphere].OnEncoderMove(direction);}
-void ClockMix_ToggleHelpScreen(bool hemisphere) {ClockMix_instance[hemisphere].HelpScreen();}
-uint32_t ClockMix_OnDataRequest(bool hemisphere) {return ClockMix_instance[hemisphere].OnDataRequest();}
-void ClockMix_OnDataReceive(bool hemisphere, uint32_t data) {ClockMix_instance[hemisphere].OnDataReceive(data);}
+void PhasePttrn_Start(bool hemisphere) {PhasePttrn_instance[hemisphere].BaseStart(hemisphere);}
+void PhasePttrn_Controller(bool hemisphere, bool forwarding) {PhasePttrn_instance[hemisphere].BaseController(forwarding);}
+void PhasePttrn_View(bool hemisphere) {PhasePttrn_instance[hemisphere].BaseView();}
+void PhasePttrn_OnButtonPress(bool hemisphere) {PhasePttrn_instance[hemisphere].OnButtonPress();}
+void PhasePttrn_OnEncoderMove(bool hemisphere, int direction) {PhasePttrn_instance[hemisphere].OnEncoderMove(direction);}
+void PhasePttrn_ToggleHelpScreen(bool hemisphere) {PhasePttrn_instance[hemisphere].HelpScreen();}
+uint32_t PhasePttrn_OnDataRequest(bool hemisphere) {return PhasePttrn_instance[hemisphere].OnDataRequest();}
+void PhasePttrn_OnDataReceive(bool hemisphere, uint32_t data) {PhasePttrn_instance[hemisphere].OnDataReceive(data);}

@@ -34,7 +34,7 @@ class ChaosAlgo {
         // Called when clocked in input 0
         virtual void run();
 
-        . getX(){
+        simfloat getX(){
             return this->x;
         }
         simfloat getY(){

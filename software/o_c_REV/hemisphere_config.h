@@ -18,7 +18,7 @@
 #define HEMISPHERE_APPLETS { \
     DECLARE_APPLET( 666, 0x04, ConstrainedRandom), \
     DECLARE_APPLET( 667, 0x80, Chaos), \
-    DECLARE_APPLET( 668, 0x80, ClockMix) \
+    DECLARE_APPLET( 668, 0x80, ClockMix), \
     DECLARE_APPLET(  8, 0x01, ADSREG), \
     DECLARE_APPLET( 34, 0x01, ADEG), \
     DECLARE_APPLET( 15, 0x02, AnnularFusion), \
