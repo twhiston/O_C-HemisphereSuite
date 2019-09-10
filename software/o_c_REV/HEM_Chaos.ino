@@ -34,7 +34,7 @@ class ChaosAlgo {
         // Called when clocked in input 0
         virtual void run();
 
-        simfloat getX(){
+        . getX(){
             return this->x;
         }
         simfloat getY(){
@@ -71,12 +71,12 @@ public:
     void run(){
 	        //calculate change
 	        simfloat dx = this->param_p * (this->y - this->x);
-	        simfloat dy = (this->x * (this->param_r - this->y)) - this->y;
-	        simfloat dz = (this->x * this->y) - (this->param_b * this->y);
+	        simfloat dy = (this->x * (this->param_r - this->z)) - this->y;
+	        simfloat dz = (this->x * this->y) - (this->param_b * this->z);
 	        //update histories
 	        this->x = this->x + dx * this->param_TS;
 	        this->y = this->y + dy * this->param_TS;
-	        this->y = this->y + dz * this->param_TS;
+	        this->z = this->z + dz * this->param_TS;
     };
 
     private:
@@ -93,14 +93,6 @@ public:
 
     Chaos() : algos{new ChaoSimplified()}{}
 
-    ~Chaos(){
-        for (size_t i = 0; i < CHAOS_AVAILABLE_ALGO; i++)
-        {
-            delete this->algos[i];
-        }
-        
-    }
-
     const char* applet_name() { // Maximum 10 characters
         return "Chaos";
     }
@@ -110,25 +102,35 @@ public:
         this->selectedAlgo = 0;
     }
 
+
+    long Map(simfloat x, long in_min, long in_max, long out_min, long out_max) {
+        //return (simfloat2int(x) - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+        return simfloat2int(x) / 20;
+    }
+
 	/* Run during the interrupt service routine, 16667 times per second */
     void Controller() {
-
         if (Clock(0)) {	
 	        this->algos[selectedAlgo]->run();
-            Out(0, simfloat2int(this->algos[selectedAlgo]->getX()));
-            Out(1, simfloat2int(this->algos[selectedAlgo]->getY()));
+            int xo = Map(this->algos[selectedAlgo]->getX(), -(__INT32_MAX__ >> 14), __INT32_MAX__ >> 14, -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV) ;
+            int yo = Map(this->algos[selectedAlgo]->getY(), -(__INT32_MAX__ >> 14), __INT32_MAX__ >> 14, -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV) ;
+            Out(0, xo);
+            Out(1, yo);
         }
     }
 
 	/* Draw the screen */
     void View() {
+        int xo = Map(this->algos[selectedAlgo]->getX(), -(__INT32_MAX__ >> 14), __INT32_MAX__ >> 14, -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV) ;
+        int yo = Map(this->algos[selectedAlgo]->getY(), -(__INT32_MAX__ >> 14), __INT32_MAX__ >> 14, -HEMISPHERE_3V_CV, HEMISPHERE_MAX_CV) ;
+            
         gfxHeader(applet_name());
         gfxSkyline();
         // Add other view code as private methods
         gfxPrint(0, 15, "x ");
-        gfxPrint(simfloat2int(this->algos[selectedAlgo]->getX()));
+        gfxPrint(xo);
         gfxPrint(0, cursorYpos(drawBase, 1), "y ");
-        gfxPrint(simfloat2int(this->algos[selectedAlgo]->getY()));
+        gfxPrint(yo);
 
     }
 
