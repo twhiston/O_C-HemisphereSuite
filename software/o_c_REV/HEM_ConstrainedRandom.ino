@@ -29,6 +29,7 @@
 #include <Entropy.h>
 static const uint16_t const_rand_step_vals[] = {1,2,5,10,25,50,100,250,500,1000,1500,2000};
 static const uint8_t const_rand_step_count = sizeof(const_rand_step_vals)/sizeof(const_rand_step_vals[0])-1;
+static bool randSetup = false;
 
 class ConstrainedRandom : public HemisphereApplet {
 public:
@@ -39,8 +40,11 @@ public:
 
 	/* Run when the Applet is selected */
     void Start() {
+      if(randSetup == false){
+        Entropy.Initialize();
+        randSetup = true;
+      }
       //TODO - restore things instead of resetting
-      Entropy.Initialize();
       this->randMax = HEMISPHERE_MAX_CV;
       this->newRand();
     }
