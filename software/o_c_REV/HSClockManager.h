@@ -40,6 +40,7 @@ class ClockManager {
     bool cycle; // Alternates for each tock, for display purposes
     byte count; // Multiple counter
     bool forwarded; // Master clock forwarding is enabled when true
+    bool internalUseBeat;
 
     ClockManager() {
         SetTempoBPM(120);
@@ -52,12 +53,17 @@ class ClockManager {
         count = 0;
         tock = 0;
         forwarded = 0;
+        internalUseBeat = 0;
     }
 
 public:
     static ClockManager *get() {
         if (!instance) instance = new ClockManager;
         return instance;
+    }
+
+    void SetInternalUseBeat(bool useBeat) {
+        internalUseBeat = useBeat;
     }
 
     void SetMultiply(int8_t multiply) {
@@ -74,6 +80,11 @@ public:
         ticks_per_tock = 1000000 / bpm;
         tempo = bpm;
     }
+
+    /* Get's if it should use the beat division for the internal clock and not the multiplied clock
+     * This allows you to clock a sequencer with a high resolution whilst still having a sensible clock speed internally
+     */
+    bool GetInternalUseBeat() {return internalUseBeat;}
 
     int8_t GetMultiply() {return tocks_per_beat;}
 

@@ -36,7 +36,7 @@ public:
     }
 
     void OnButtonPress() {
-        if (++cursor > 2) cursor = 0;
+        if (++cursor > 3) cursor = 0;
     }
 
     void OnEncoderMove(int direction) {
@@ -58,6 +58,10 @@ public:
             int8_t mult = clock_m->GetMultiply();
             mult += direction;
             clock_m->SetMultiply(mult);
+        }
+
+        if (cursor == 3) { // Set internal use beat clock
+            clock_m->SetInternalUseBeat((direction > 0)?true:false);
         }
     }
         
@@ -110,9 +114,14 @@ private:
         gfxPrint(1, 35, "x");
         gfxPrint(clock_m->GetMultiply());
 
+        // use internal beat
+        gfxPrint(1, 45, "Int Beat: ");
+        gfxPrint(clock_m->GetInternalUseBeat()? "true" : "false" );
+
         if (cursor == 0) gfxCursor(16, 23, 46);
         if (cursor == 1) gfxCursor(23, 33, 18);
         if (cursor == 2) gfxCursor(8, 43, 12);
+        if (cursor == 3) gfxCursor(62, 53, 28);
     }
 };
 
