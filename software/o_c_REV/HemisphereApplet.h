@@ -335,7 +335,8 @@ public:
 
         if (ch == 0 && !physical) {
             ClockManager *clock_m = clock_m->get();
-            if (clock_m->IsRunning()) clocked = clock_m->Tock();
+            // TODO - TomW - this is where we could divide the output clock?
+            if (clock_m->IsRunning()) clocked = (clock_m->Tock() && clock_m->EndOfBeat());
             else if (master_clock_bus) clocked = OC::DigitalInputs::clocked<OC::DIGITAL_INPUT_1>();
         }
 

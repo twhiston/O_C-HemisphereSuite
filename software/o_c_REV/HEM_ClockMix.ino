@@ -31,10 +31,13 @@
 
 #include <Entropy.h>
 
-
 #define HEM_CLOCKMIX_MAX 100
 #define HEM_CLOCKMIX_GUI_ELEMENTS 2
 
+// TODO 
+//      - cv input to control probability
+//      - GUI
+//      - save and restore values
 class ClockMix : public HemisphereApplet {
 public:
 
@@ -97,10 +100,10 @@ public:
 protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide
-        help[HEMISPHERE_HELP_DIGITALS] = "Digital in help";
-        help[HEMISPHERE_HELP_CVS]      = "CV in help";
-        help[HEMISPHERE_HELP_OUTS]     = "Out help";
-        help[HEMISPHERE_HELP_ENCODER]  = "123456789012345678";
+        help[HEMISPHERE_HELP_DIGITALS] = "Clocks in";
+        help[HEMISPHERE_HELP_CVS]      = "NOTHING";
+        help[HEMISPHERE_HELP_OUTS]     = "Clocks || / &&";
+        help[HEMISPHERE_HELP_ENCODER]  = "Set values";
         //                               "------------------" <-- Size Guide
     }
     
@@ -121,17 +124,38 @@ private:
         bool state = false;
         if (Clock(ch)) {
             uint32_t r = Entropy.random(0, HEM_CLOCKMIX_MAX);
-            if (r < prob[ch])
+            if (r <= prob[ch])
             {
                 state = true;
             }
         }
         return state;
     }
+
+    const uint8_t drawBase = 15;
+    const uint8_t lineHeight = 10;
     
     void DrawInterface() {
         gfxSkyline();
+
+        gfxPrint(0, drawBase, "prob A");
+        gfxPrint(this->prob[0]);
+        if (cursor == 0) {
+            uint8_t ypos = cursorYpos(drawBase,1,-2);
+            gfxLine(0, ypos, 50, ypos);
+        }
+        gfxPrint(0, cursorYpos(drawBase, 1), "Prob B");
+        gfxPrint(this->prob[1]);
+        if (cursor == 1) {
+            uint8_t ypos = cursorYpos(drawBase,2,-2);
+            gfxLine(0, ypos, 50, ypos);
+        }
     }
+
+    uint8_t cursorYpos(uint8_t pos, uint8_t line = 0, int8_t offset = 0){
+        return (drawBase + (line * lineHeight)) + offset;
+    }
+
 };
 
 
