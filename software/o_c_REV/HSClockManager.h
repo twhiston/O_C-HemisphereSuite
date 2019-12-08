@@ -81,6 +81,13 @@ public:
         tempo = bpm;
     }
 
+    /* This is primarily used for setting an already calculated tempo value when doing a setting restore
+     * It should not normally be called from App code, use SetTempoBPM instead
+     */
+    void SetTempo(uint16_t raw_tempo) {
+        tempo = raw_tempo;
+    }
+
     /* Get's if it should use the beat division for the internal clock and not the multiplied clock
      * This allows you to clock a sequencer with a high resolution whilst still having a sensible clock speed internally
      */

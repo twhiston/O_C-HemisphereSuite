@@ -119,9 +119,9 @@ public:
             // for another MIDI In applet before looking for sysex. Note that applets
             // that use MIDI In should check for sysex themselves; see Midi In for an
             // example.
-            if (usbMIDI.read() && usbMIDI.getType() == 7) {
-                OnReceiveSysEx();
-            }
+            // if (usbMIDI.read() && usbMIDI.getType() == 7) {
+            //     OnReceiveSysEx();
+            // }
         }
 
         if (clock_setup) ClockSetup.Controller(LEFT_HEMISPHERE, clock_m->IsForwarded());

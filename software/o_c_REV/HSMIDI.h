@@ -227,62 +227,63 @@ protected:
      */
     bool ListenForSysEx() {
         bool heard_sysex = 0;
-        if (usbMIDI.read()) {
-            if (usbMIDI.getType() == 7) {
-                OnReceiveSysEx();
-                heard_sysex = 1;
-            }
-        }
+        // if (usbMIDI.read()) {
+        //     if (usbMIDI.getType() == 7) {
+        //         OnReceiveSysEx();
+        //         heard_sysex = 1;
+        //     }
+        // }
         return heard_sysex;
     }
 
     void SendSysEx(PackedData packed, char target_id) {
-        uint8_t sysex[SYSEX_DATA_MAX_SIZE];
-        uint8_t size = 0;
-        sysex[size++] = 0xf0;      // Start of exclusive
-        sysex[size++] = 0x7d;      // Non-Commercial Manufacturer
-        sysex[size++] = 0x62;      // Beige Maze
-        sysex[size++] = target_id; // Target product
-        for (uint8_t i = 0; i < packed.size; i++)
-        {
-            sysex[size++] = packed.data[i];
-        }
-        sysex[size++] = 0xf7; // End of exclusive
-        usbMIDI.sendSysEx(size, sysex);
-        usbMIDI.send_now();
+        // uint8_t sysex[SYSEX_DATA_MAX_SIZE];
+        // uint8_t size = 0;
+        // sysex[size++] = 0xf0;      // Start of exclusive
+        // sysex[size++] = 0x7d;      // Non-Commercial Manufacturer
+        // sysex[size++] = 0x62;      // Beige Maze
+        // sysex[size++] = target_id; // Target product
+        // for (uint8_t i = 0; i < packed.size; i++)
+        // {
+        //     sysex[size++] = packed.data[i];
+        // }
+        // sysex[size++] = 0xf7; // End of exclusive
+        //usbMIDI.sendSysEx(size, sysex);
+        //usbMIDI.send_now();
     }
 
     bool ExtractSysExData(uint8_t *V, char target_id) {
         // Get the full sysex dump from the MIDI library
-        uint8_t *sysex = usbMIDI.getSysExArray();
+        //uint8_t *sysex = usbMIDI.getSysExArray();
+        return false;
 
-        bool verify = (sysex[1] == 0x7d && sysex[2] == 0x62 && sysex[3] == target_id);
-        if (verify) { // Does the received SysEx belong to this app?
-            // Strip the header and end-of-exclusive byte to reveal packed data
-            PackedData packed;
-            uint8_t psize = 0;
-            uint8_t data[SYSEX_DATA_MAX_SIZE];
-            for (int i = 0; i < SYSEX_DATA_MAX_SIZE; i++)
-            {
-                uint8_t b = sysex[i + 4]; // Getting packed bytes past the header
-                if (b == 0xf7) break;
-                data[psize++] = b;
-            }
-            packed.set_data(psize, data);
+        // bool verify = (sysex[1] == 0x7d && sysex[2] == 0x62 && sysex[3] == target_id);
+        // if (verify) { // Does the received SysEx belong to this app?
+        //     // Strip the header and end-of-exclusive byte to reveal packed data
+        //     PackedData packed;
+        //     uint8_t psize = 0;
+        //     uint8_t data[SYSEX_DATA_MAX_SIZE];
+        //     for (int i = 0; i < SYSEX_DATA_MAX_SIZE; i++)
+        //     {
+        //         uint8_t b = sysex[i + 4]; // Getting packed bytes past the header
+        //         if (b == 0xf7) break;
+        //         data[psize++] = b;
+        //     }
+        //     packed.set_data(psize, data);
 
-            // Unpack the data and set the value array
-            UnpackedData unpacked = packed.unpack();
-            for (int i = 0; i < unpacked.size; i++)
-            {
-                V[i] = unpacked.data[i];
-            }
-            last_app_code = target_id;
-        } else {
-            if (sysex[1] == 0x7d && sysex[2] == 0x62) {
-                last_app_code = sysex[3];
-            } else last_app_code = 0; // Unknown application
-        }
-        return verify;
+        //     // Unpack the data and set the value array
+        //     UnpackedData unpacked = packed.unpack();
+        //     for (int i = 0; i < unpacked.size; i++)
+        //     {
+        //         V[i] = unpacked.data[i];
+        //     }
+        //     last_app_code = target_id;
+        // } else {
+        //     if (sysex[1] == 0x7d && sysex[2] == 0x62) {
+        //         last_app_code = sysex[3];
+        //     } else last_app_code = 0; // Unknown application
+        // }
+        // return verify;
     }
 
     char LastSysExApplicationCode() {return last_app_code;}

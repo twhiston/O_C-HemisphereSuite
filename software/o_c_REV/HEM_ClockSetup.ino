@@ -68,6 +68,8 @@ public:
     uint32_t OnDataRequest() {return 0;}
     void OnDataReceive(uint32_t data) { }
 
+
+
 protected:
     void SetHelp() {
         //                               "------------------" <-- Size Guide

@@ -57,13 +57,19 @@ public:
     uint32_t OnDataRequest() {
         uint32_t data = 0;
         Pack(data, PackLocation {0,16}, clock_m->GetTempo());
-        Pack(data, PackLocation {16,5}, clock_m->GetMultiply() - 1);
+        Pack(data, PackLocation {16,8}, clock_m->GetMultiply());
+        Pack(data, PackLocation {24, 1}, clock_m->GetInternalUseBeat());
+        Pack(data, PackLocation {25, 1}, (clock_m->IsRunning() || clock_m->IsPaused()));
         return data;
     }
 
     void OnDataReceive(uint32_t data) {
-        clock_m->SetTempoBPM(Unpack(data, PackLocation {0,16}));
-        clock_m->SetMultiply(Unpack(data, PackLocation {16,5}) + 1);
+        clock_m->SetTempo(Unpack(data, PackLocation {0,16}));
+        clock_m->SetMultiply(Unpack(data, PackLocation {16,8}));
+        clock_m->SetInternalUseBeat(Unpack(data, PackLocation {24,1}));
+        if (Unpack(data, PackLocation {25,1})){
+            clock_m->Start();
+        }
     }
 
 protected:

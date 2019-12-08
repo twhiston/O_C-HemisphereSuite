@@ -3,9 +3,14 @@ Hemisphere Suite: Alternate Alternate Firmware for Ornament and Crime
 
 ![My image](https://farm1.staticflickr.com/676/20090774694_b56e557693_b.jpg)
 
-### further additions:
+### TomW's further additions:
 
-As hemisphere is so great this fork ditches the darkest timeline and uses the space for more hemisphere applets
+* No Darkest Timeline
+* No Usb Midi or apps 
+    This is the biggest change, midi will not work anywhere as all the libraries and apps have been removed. I needed the space in memory!!!
+* More settings for internal clock (useful when using outputs for clocking something at a high PPQ)
+* Metronome app saves state of internal clock settings (as it is assumed you are using it as a master clock in this mode)
+* More Experimental Hemisphere apps
 
 ### firmware:
 

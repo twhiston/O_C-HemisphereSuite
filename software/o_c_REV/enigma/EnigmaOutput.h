@@ -140,8 +140,8 @@ public:
             note_number = constrain(note_number, 0, 127);
 
             if (midi_channel()) {
-                if (last_note > -1) usbMIDI.sendNoteOn(last_note, 0, midi_channel());
-                usbMIDI.sendNoteOn(note_number, 0x60, midi_channel());
+                //if (last_note > -1) usbMIDI.sendNoteOn(last_note, 0, midi_channel());
+                //usbMIDI.sendNoteOn(note_number, 0x60, midi_channel());
                 last_note = note_number;
             } else {
                 deferred_note = note_number;
@@ -150,31 +150,31 @@ public:
 
         // Modulation based on low 8 bits, shifted right for MIDI range
         if (ty == EnigmaOutputType::MODULATION && midi_channel()) {
-            usbMIDI.sendControlChange(1, (reg & 0x00ff) >> 1, midi_channel());
+            //usbMIDI.sendControlChange(1, (reg & 0x00ff) >> 1, midi_channel());
         }
 
         // Expression based on low 8 bits; for MIDI, expression is a percentage of channel volume
         if (ty == EnigmaOutputType::EXPRESSION && midi_channel()) {
-            usbMIDI.sendControlChange(11, (reg & 0x00ff) >> 1, midi_channel());
+            //usbMIDI.sendControlChange(11, (reg & 0x00ff) >> 1, midi_channel());
         }
 
         // Trigger and Gate behave the same way with MIDI; They'll use the last note that wasn't sent
         // out via MIDI on its own output. If no such note is available, then Trigger/Gate will do nothing.
         if ((ty == EnigmaOutputType::TRIGGER || ty == EnigmaOutputType::TRIGGER) && midi_channel()) {
             if (deferred_note >  -1 && (reg & 0x01)) {
-                if (last_note > -1) usbMIDI.sendNoteOff(last_note, 0, midi_channel());
-                usbMIDI.sendNoteOn(deferred_note, 0x60, midi_channel());
+                //if (last_note > -1) usbMIDI.sendNoteOff(last_note, 0, midi_channel());
+                //usbMIDI.sendNoteOn(deferred_note, 0x60, midi_channel());
                 last_note = deferred_note;
                 deferred_note = -1;
             }
         }
 
-        usbMIDI.send_now();
+        //usbMIDI.send_now();
     }
 
     void NoteOff() {
         if (midi_channel()) {
-            if (last_note > -1) usbMIDI.sendNoteOn(last_note, 0, midi_channel());
+            //if (last_note > -1) usbMIDI.sendNoteOn(last_note, 0, midi_channel());
             last_note = -1;
             deferred_note = -1;
         }
